@@ -17,6 +17,8 @@ VERSION=$(lsb_release -c | sed -e 's/.*:\t//g')
 #}
 
 function buildDeb {
+	git submodule update --init --recursive
+
 	sudo apt-get install debhelper autotools-dev libcurl4-openssl-dev libxml2-dev libssl-dev libfuse-dev pkg-config libmagic-dev libjson0-dev dpkg-dev gcc tar
 	PKG_NAME="$(grep '[a-z]'    hubicfuse/debian/changelog | head -1 | awk '{print $1}')"
 	PKG_VERSION="$(grep '[a-z]' hubicfuse/debian/changelog | head -1 | grep -o '(.*)' | tr -d "()")"
@@ -26,11 +28,11 @@ function buildDeb {
 	dpkg-buildpackage -rfakeroot
 	popd
 
-	rm -f "$PKG_NAME"_*
 	mv *.deb cloudfuse.deb
+	rm -f "$PKG_NAME"_*
 }
 
-function getDeb {
+function prepareDeb {
 	PKG_CATEGORY="$1"; shift
 
 	sudo apt-get install git
@@ -53,7 +55,6 @@ function getDeb {
 		git push
 	fi
 
-	echo "/tmp/install-hubicfuse/package/${PKG_CATEGORY}/cloudfuse.deb"
 	return 0
 }
 
@@ -61,13 +62,17 @@ function getDeb {
 
 case "$DISTR" in
 	Ubuntu)
-		DEB="$(getDeb "$(echo $DISTR | tr '[:upper:]' '[:lower:]')"/"$VERSION")"
-		if [ "$DEB" = "" ]; then
+		PKG_CATEGORY="$(echo $DISTR | tr '[:upper:]' '[:lower:]')"/"$VERSION"
+		prepareDeb "A${PKG_CATEGORY}"
+		RC="$?"
+		if [ "$RC" -ne "0" ]; then
 			echo "An error occurred. Exit. Try: bash -x $0"
 			exit -1
 		fi
+		DEB="/tmp/install-hubicfuse/package/${PKG_CATEGORY}/cloudfuse.deb"
+
 		sudo dpkg -i "$DEB"
-		rm -f "$DEB"
+		#rm -rf "/tmp/install-hubicfuse"
 		;;
 esac
 
