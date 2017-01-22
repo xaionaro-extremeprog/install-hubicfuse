@@ -22,7 +22,8 @@ function buildDeb {
 	sudo apt-get install debhelper autotools-dev libcurl4-openssl-dev libxml2-dev libssl-dev libfuse-dev pkg-config libmagic-dev libjson0-dev dpkg-dev gcc tar
 	PKG_NAME="$(grep '[a-z]'    hubicfuse/debian/changelog | head -1 | awk '{print $1}')"
 	PKG_VERSION="$(grep '[a-z]' hubicfuse/debian/changelog | head -1 | grep -o '(.*)' | tr -d "()")"
-	tar -czvf cloudfuse_0.9.orig.tar.gz hubicfuse
+	PKG_VERSION_UPSTREAM="$(echo "$PKG_VERSION" | awk -F '-' '{print $1}')"
+	tar -czvf "${PKG_NAME}"_"${PKG_VERSION_UPSTREAM}".orig.tar.gz hubicfuse
 
 	pushd hubicfuse
 	dpkg-buildpackage -rfakeroot
@@ -63,7 +64,7 @@ function prepareDeb {
 case "$DISTR" in
 	Ubuntu)
 		PKG_CATEGORY="$(echo $DISTR | tr '[:upper:]' '[:lower:]')"/"$VERSION"
-		prepareDeb "A${PKG_CATEGORY}"
+		prepareDeb "${PKG_CATEGORY}"
 		RC="$?"
 		if [ "$RC" -ne "0" ]; then
 			echo "An error occurred. Exit. Try: bash -x $0"
