@@ -1,0 +1,3 @@
+[submodule "hubicfuse"]
+	path = hubicfuse
+	url = https://github.com/TurboGit/hubicfuse
